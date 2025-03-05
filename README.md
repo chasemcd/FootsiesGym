@@ -65,7 +65,7 @@ To visualize gameplay, you'll need to run the windowed version of the game. This
 ---
 ###  gRPC / Protobuf Updates
 
-You'll need to generate `Footsies.cs` and `FootsiesGrpc.cs`. This repo includes what you need on a __Windows__ machine:
+If you are updating the proto, you'll need to generate `Footsies.cs` and `FootsiesGrpc.cs`. This repo includes what you need on a __Windows__ machine:
 
 ```
 .\protoc\bin\protoc.exe --csharp_out=.\env\game\proto\ --grpc_out=.\env\game\proto\ --plugin=protoc-gen-grpc=.\plugins\grpc_csharp_plugin.exe .\env\game\proto\footsies_service.proto
