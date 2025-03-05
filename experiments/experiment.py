@@ -9,7 +9,6 @@ from ray.rllib.algorithms import callbacks as rllib_callbacks
 from ray.rllib.examples._old_api_stack.policy import random_policy
 from ray.rllib.policy import policy as rllib_policy
 from ray.tune import CLIReporter
-from ray.tune.registry import get_trainable_cls
 from ray.tune.result import (
     EPISODE_REWARD_MEAN,
     MEAN_ACCURACY,
@@ -277,7 +276,7 @@ class Experiment:
             print("Experiment already exists, restoring...")
             tuner = tune.Tuner.restore(
                 results_path,
-                trainable=get_trainable_cls("APPO"),
+                trainable=appo.APPO,
             )
 
         else:
@@ -286,7 +285,7 @@ class Experiment:
             run_config = self.construct_run_config()
 
             tuner = tune.Tuner(
-                trainable=get_trainable_cls("APPO"),
+                trainable=appo.APPO,
                 param_space=model_config,
                 tune_config=tune_config,
                 run_config=run_config,
