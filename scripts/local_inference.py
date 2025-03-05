@@ -1,32 +1,33 @@
 import collections
-import socket
 import time
 from typing import Any
 
 import numpy as np
-import pygame
 from ray.rllib import policy as rllib_policy
 from ray.rllib.utils import policy as rllib_policy_utils
 from ray.rllib.utils import typing as rllib_typing
 from scipy import special
 
+from components import module_repository
 from footsies import footsies_env
 from footsies.game.constants import EnvActions
-from utils import module_repository
 
-"""
-
-TODO(chase): make the human frame skip 1 and the bot frame skip 4 (or configurabl)
-"""
+try:
+    import pygame
+except ImportError:
+    pygame = None
 
 MODEL_FRAME_SKIP = 4
 
 MODULES = {
     "p1": "human",  # human must be p1 for correct control mapping
-    "p2": "noop",
+    "p2": "noop",  # Add the name of a policy in the ModuleRepository here
 }
 
 if "human" in MODULES.values():
+    assert (
+        pygame is not None
+    ), "PyGame is required for human control. Install pygame with `pip install pygame`."
     pygame.init()
     screen = pygame.display.set_mode((1, 1), pygame.NOFRAME)
 
@@ -72,19 +73,14 @@ def play_local_episode(
 
     # Store last actions for non-human agents
     last_actions = {agent_id: None for agent_id in MODULES.keys()}
-    frame_counts = {agent_id: 0 for agent_id in MODULES.keys()}
     frame = 0
     while not terminateds["__all__"] and not truncateds["__all__"]:
         actions = {}
-        state = env.last_game_state
-        # for player_state in [state.player1, state.player2]:
-        #     print(player_state.is_guard_broken)
         for agent_id, obs in obs.items():
             # For human agents, get action every frame
             if MODULES[agent_id] == "human":
                 actions[agent_id] = get_human_action()
 
-            # For other agents, only get new action every frame_skip frames
             else:
                 if frame % MODEL_FRAME_SKIP == 0:
                     if MODULES[agent_id] == "random":
@@ -114,7 +110,6 @@ def play_local_episode(
 
         if MAX_FPS is not None:
             time.sleep(1 / MAX_FPS)
-    print(reward)
 
     if terminateds["__all__"] or truncateds["__all__"]:
         time.sleep(3)
@@ -149,36 +144,11 @@ def main():
         episode_results = play_local_episode(env, modules)
         for k, v in episode_results.items():
             cumulative_results[k] += v
-            #     print(k, cumulative_results[k] / num_games)
 
         print(
             f"{num_games} games played. {MODULES['p1']} winrate: {np.round(cumulative_results['p1_win'] / num_games, 2)}"
         )
 
 
-def is_port_in_use(port: int) -> bool:
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-        try:
-            s.bind(("localhost", port))
-            return False
-        except socket.error:
-            return True
-
-
 if __name__ == "__main__":
-    # Only start Footsies if it's not already running
-    # if not is_port_in_use(60051):
-    #     footsies_process = subprocess.Popen(
-    #         [
-    #             "~/footsies_linux_windowed_021725/footsies.x86_64",
-    #             "--port",
-    #             "60051",
-    #         ],
-    #         shell=True,
-    #         preexec_fn=os.setsid,
-    #     )
-    # while not is_port_in_use(60051):
-    #     print("Waiting for Footsies to start...")
-    #     time.sleep(1)
-
     main()

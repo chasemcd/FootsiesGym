@@ -110,13 +110,8 @@ class Experiment:
         ]
         policy_action_space = footsies_env.FootsiesEnv.action_space["p1"]
 
-        eval_policies = [
-            "4fs-16od-082992f-0.01to0.001-vsrandom",
-            "4fs-16od-082992f-0.03to0.01-sp",
-            # "4fs-8od-4e-4tau-100mentropy",
-            # "4fs-0od-4e-4tau-300mentropy",
-            # "4fs-0od-4e-4tau-250mentropy-IB-0",
-        ]
+        # Add policy names stored in the ModuleRepository here to evaluate against them
+        eval_policies = []
 
         config = (
             appo.APPOConfig()
@@ -213,9 +208,6 @@ class Experiment:
                                 for eval_policy in eval_policies + ["random"]
                             ]
                         ).policy_mapping_fn,
-                        # "policy_mapping_fn": lambda agent_id, episode, **kwargs: (
-                        #     "focal_policy" if agent_id == "p1" else "random"
-                        # ),
                     },
                 },
             )
@@ -228,16 +220,13 @@ class Experiment:
                         ),
                         script_metrics.ScriptMetrics,
                     ]
-                    # [matchup_performance.MatchupPerformance, winrates.Winrates]
                 )
             )
         )
 
         if self.config.get("tune"):
             config.training(
-                lr=tune.choice(
-                    [1e-3, 3e-4, 5e-5, 1e-5]
-                ),  # tune.choice([1e-4, 4e-4, 1e-5]),
+                lr=tune.choice([1e-3, 3e-4, 5e-5, 1e-5]),
                 train_batch_size=1024,
                 entropy_coeff=tune.choice(
                     [
@@ -250,7 +239,7 @@ class Experiment:
                         0.1,
                     ]
                 ),
-                gamma=0.995,  # tune.choice([0.985, 0.995]),
+                gamma=0.995,
                 vf_loss_coeff=tune.choice([0.5, 1.0]),
                 tau=tune.choice([1, 0.1, 4e-4]),
             )
@@ -264,7 +253,6 @@ class Experiment:
                 entropy_coeff_schedule=[[0, 0.03], [200_000_000, 0.01]],
                 gamma=0.995,
                 vf_loss_coeff=1.0,
-                tau=4e-4,
             )
 
         return config
@@ -288,7 +276,7 @@ class Experiment:
         if experiment_exists and experiment_name != "test":
             print("Experiment already exists, restoring...")
             tuner = tune.Tuner.restore(
-                results_path,  # path to experiment
+                results_path,
                 trainable=get_trainable_cls("APPO"),
             )
 

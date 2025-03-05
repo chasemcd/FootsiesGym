@@ -1,7 +1,5 @@
 import collections
 import copy
-import json
-import os
 from typing import Any
 
 import numpy as np
@@ -67,10 +65,9 @@ class FootsiesEncoder:
             game_state.player2, game_state.frame_count, **kwargs.get("p2", {})
         )
 
-        if len(self._encoding_history["p1"]) < self.observation_delay:
-            observation_delay = 0
-        else:
-            observation_delay = self.observation_delay
+        observation_delay = min(
+            self.observation_delay, len(self._encoding_history["p1"])
+        )
 
         if observation_delay > 0:
             p1_delayed_encoding = self._encoding_history["p1"][
@@ -87,10 +84,6 @@ class FootsiesEncoder:
         self._encoding_history["p2"].append(p2_encoding)
         self._last_common_state = common_state
 
-        # Deepcopy to avoid reference issues
-        # p1_delayed_encoding = copy.deepcopy(p1_delayed_encoding)
-        # p2_delayed_encoding = copy.deepcopy(p2_delayed_encoding)
-
         # Create features dictionary and export to JSON
         features = {}
         current_index = 0
@@ -101,37 +94,6 @@ class FootsiesEncoder:
             "length": len(common_state),
         }
         current_index += len(common_state)
-
-        # Player 1 features
-        for feature_name, feature_value in p1_encoding.items():
-            length = (
-                len(feature_value)
-                if isinstance(feature_value, np.ndarray)
-                else 1
-            )
-            features[feature_name] = {"start": current_index, "length": length}
-            current_index += length
-
-        # Player 2 features (delayed)
-        for feature_name, feature_value in p2_delayed_encoding.items():
-            length = (
-                len(feature_value)
-                if isinstance(feature_value, np.ndarray)
-                else 1
-            )
-            features[f"opponent_{feature_name}"] = {
-                "start": current_index,
-                "length": length,
-            }
-            current_index += length
-
-        # Export features to JSON if it doesn't exist
-        json_path = os.path.join(
-            os.path.dirname(__file__), "feature_indices.json"
-        )
-        if not os.path.exists(json_path):
-            with open(json_path, "w") as f:
-                json.dump(features, f, indent=2)
 
         # Concatenate the observations for the undelayed encoding
         p1_encoding = np.hstack(list(p1_encoding.values()), dtype=np.float32)
@@ -205,7 +167,6 @@ class FootsiesEncoder:
             the agent always thinks it's LHS
         """
         feature_dict = {
-            # "frame_count": frame_count,
             "player_position_x": player_state.player_position_x / 4.0,
             "velocity_x": player_state.velocity_x / 5.0,
             "is_dead": int(player_state.is_dead),
@@ -234,6 +195,7 @@ class FootsiesEncoder:
             "is_face_right": int(player_state.is_face_right),
             "current_frame_advantage": player_state.current_frame_advantage
             / 10,
+            # The below features leak some information about the opponent!
             "would_next_forward_input_dash": int(
                 player_state.would_next_forward_input_dash
             ),

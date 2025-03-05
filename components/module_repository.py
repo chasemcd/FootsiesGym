@@ -4,7 +4,6 @@ import os
 from typing import TYPE_CHECKING
 
 import natsort
-import tree  # pip install dm_tree
 from ray.rllib import policy as rllib_policy
 from ray.rllib.core.rl_module import rl_module
 from ray.rllib.examples._old_api_stack.policy import random_policy
@@ -38,52 +37,11 @@ class FootsiesModuleSpec:
 class ModuleRepository:
 
     modules = [
-        # Self-play policies
         FootsiesModuleSpec(
-            module_name="4fs-16od-082992f-0.01to0.001-vsrandom",
-            experiment_name="082992f-16od-noIB-0",
-            checkpoint_number=67,
-        ),
-        FootsiesModuleSpec(
-            module_name="4fs-16od-082992f-0.03to0.01-sp",
-            experiment_name="ae15419-16od-sp-0",
-            trial_id="ae15419-16od-sp-0-00000_0_2025-02-19_00-01-52",
-            checkpoint_number=39,
-        ),
-        FootsiesModuleSpec(
-            module_name="4fs-16od-13c7f7b-0.05to0.01-sp-00",
-            experiment_name="13c7f7b-0.05to0.01-sp-1",
-            trial_id="13c7f7b-0.05to0.01-sp-1-00000_0_2025-02-20_09-40-36",
-            checkpoint_number=39,
-        ),
-        FootsiesModuleSpec(
-            module_name="4fs-16od-13c7f7b-0.05to0.01-sp-01",
-            experiment_name="13c7f7b-0.05to0.01-sp-1",
-            trial_id="13c7f7b-0.05to0.01-sp-1-00001_1_2025-02-20_23-56-46",
-            checkpoint_number=39,
-        ),
-        FootsiesModuleSpec(
-            module_name="4fs-16od-13c7f7b-0.05to0.01-sp-02",
-            experiment_name="13c7f7b-0.05to0.01-sp-1",
-            trial_id="13c7f7b-0.05to0.01-sp-1-00002_2_2025-02-21_13-55-58",
-            checkpoint_number=39,
-        ),
-        FootsiesModuleSpec(
-            module_name="4fs-16od-13c7f7b-0.05to0.01-sp-03",
-            experiment_name="13c7f7b-0.05to0.01-sp-1",
-            trial_id="13c7f7b-0.05to0.01-sp-1-00003_3_2025-02-22_04-04-54",
-            checkpoint_number=40,
-        ),
-        # ESR policies
-        FootsiesModuleSpec(
-            module_name="ESR-0",
-            experiment_name="6e32536-ESR-vsSPRandom-0",
-            checkpoint_number=-1,
-        ),
-        FootsiesModuleSpec(
-            module_name="ESR-0.1alpha-0",
-            experiment_name="6378da0-ESR-0.1alpha-0",
-            checkpoint_number=46,
+            module_name="MY_POLICY_NAME",  # must specify
+            experiment_name="MY_EXPERIMENT_NAME",  #  must specify
+            trial_id="MY_TRIAL_ID",  # only required if experiment has multiple trials
+            checkpoint_number=-1,  # -1 for latest checkpoint
         ),
     ]
 
@@ -141,12 +99,6 @@ def get_local_checkpoint(
     base_dir = os.path.expanduser(
         f"~/ray_results/{module_spec.experiment_name}"
     )
-
-    # For windows
-    # Get absolute path and add file:// prefix
-    # base_dir = (
-    #     f"{os.path.abspath(os.path.expanduser(module_spec.experiment_name))}"
-    # )
 
     trial_name = module_spec.trial_id
 
