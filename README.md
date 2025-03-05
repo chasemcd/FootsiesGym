@@ -16,7 +16,7 @@ pre-commit install
 
 ### Game Servers
 
-Before training, you'll need to launch the headless game servers. A script is provided to do so in `scripts/start_local_servers.sh`:
+Before training, you'll need to launch the headless game servers. A script is provided to do so in `scripts/start_local_servers.sh`, but you must first unpack the binaries that are included in `binaries/footsies_linux_server_021725.zip`. The `start_local_servers.sh` script assumes that you have unpacked the contents into `~/footsies_binaries`.
 
 ```bash
 ./scripts/start_local_servers.sh <num-train-servers> <num-eval-servers>
