@@ -11,6 +11,14 @@ pip install -r requirements.txt
 pre-commit install
 ```
 
+On a Mac, you may need to ensure you have `cmake` installed. You can install it using Homebrew:
+
+```bash
+brew install cmake
+```
+
+
+
 
 ## Training
 
