@@ -57,15 +57,6 @@ class Winrates(callbacks.DefaultCallbacks):
         else:
             return  # focal agent not in this episode
 
-        # episode.hist_data["game_tied"] = [0]
-        # if p2_dead:
-        #     episode.hist_data[f"winrates/{p1_policy}_vs_{p2_policy}"] = [1]
-        # elif p1_dead:
-        #     episode.hist_data[f"winrates/{p1_policy}_vs_{p2_policy}"] = [0]
-        # else:
-        #     episode.hist_data[f"winrates/{p1_policy}_vs_{p2_policy}"] = [0.5]  # tie
-        #     episode.hist_data["game_tied"] = [1]
-
         episode.custom_metrics[
             f"winrates/{self.focal_policy_id}/vs_{p2_policy}_ties"
         ] = [0]
