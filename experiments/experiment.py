@@ -53,7 +53,7 @@ class Experiment:
             name=self.config["experiment_name"],
             stop={
                 "num_agent_steps_trained": self.config.get(
-                    "agent_steps_to_train", 200_000_000
+                    "agent_steps_to_train", 300_000_000
                 )
             },
             callbacks=(
@@ -66,7 +66,7 @@ class Experiment:
                 fail_fast=self.config.get("fail_fast", False),
             ),
             checkpoint_config=air.config.CheckpointConfig(
-                checkpoint_frequency=self.config.get("checkpoint_freq", 250),
+                checkpoint_frequency=self.config.get("checkpoint_freq", 50),
                 # num_to_keep=self.config.get("num_to_keep", 5),
                 checkpoint_at_end=True,
             ),
@@ -88,13 +88,13 @@ class Experiment:
                 search_alg=HyperOptSearch(),
                 scheduler=tune.schedulers.ASHAScheduler(
                     time_attr="num_agent_steps_trained",
-                    max_t=25_000_000,
+                    max_t=50_000_000,
                     grace_period=5_000_000,
                 ),
             )
         else:
             tune_config = tune.TuneConfig(
-                num_samples=self.config.get("num_trials", 4),
+                num_samples=self.config.get("num_trials", 1),
                 max_concurrent_trials=self.config.get(
                     "max_concurrent_trials", 1
                 ),
