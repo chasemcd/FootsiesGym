@@ -32,15 +32,7 @@ sequenceDiagram
     Note over Server,Game: Game Logic
     Note over Env,gRPC: Environment Interface
 
-    rect rgb(200, 220, 255)
-        Note over RLlib,Env: Python Environment Components
-    end
-    rect rgb(255, 220, 200)
-        Note over Server,Game: Unity Game Components
-    end
-    rect rgb(220, 255, 220)
-        Note over gRPC: gRPC Communication Layer
-    end
+
 ```
 
 The diagram above shows how the different components interact during training:
