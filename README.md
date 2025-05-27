@@ -9,11 +9,11 @@ The environment is derived from the open-source Unity implementation, which has 
 
 ```mermaid
 sequenceDiagram
-    participant RLlib as Ray RLlib
-    participant Env as FootsiesEnv
-    participant gRPC as gRPC Client
-    participant Server as Unity Game Server
-    participant Game as Footsies Game
+    actor RLlib as Ray RLlib
+    actor Env as FootsiesEnv
+    actor gRPC as gRPC Client
+    actor Server as Unity Game Server
+    actor Game as Footsies Game
 
     Note over RLlib,Env: Python Environment
     Note over gRPC: Communication Layer
@@ -25,13 +25,10 @@ sequenceDiagram
     Server->>Game: Update Game State
     Game->>Server: Game State
     Server->>gRPC: gRPC Response
-    gRPC->>Env: Observation
-    Env->>RLlib: (observation, reward, done, info)
+    gRPC->>Env: Game State
+    Env->>RLlib: (obs., rews., terms., truns., info)
 
     Note over RLlib,Game: Training Loop
-    Note over Server,Game: Game Logic
-    Note over Env,gRPC: Environment Interface
-
 
 ```
 
