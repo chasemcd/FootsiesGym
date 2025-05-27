@@ -165,7 +165,6 @@ FootsiesGym/
 ├── experiments/        # Training configurations
 ├── footsies/          # Core environment
 ├── models/            # Neural network architectures
-├── plugins/           # gRPC plugins
 ├── protoc/            # Protocol buffer tools
 ├── scripts/           # Helper scripts
 ├── testing/           # Test files
