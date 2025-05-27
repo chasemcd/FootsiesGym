@@ -31,7 +31,7 @@ class NoOpRLModule(rl_module.RLModule):
             tree.flatten(batch[sample_batch.SampleBatch.OBS])[0]
         )
         actions = batch_func(
-            [footsies_constants.Actions.NONE for _ in range(obs_batch_size)]
+            [footsies_constants.EnvActions.NONE for _ in range(obs_batch_size)]
         )
         return {sample_batch.SampleBatch.ACTIONS: actions}
 
