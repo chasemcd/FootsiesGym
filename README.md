@@ -26,7 +26,7 @@ sequenceDiagram
     Game->>Server: Game State
     Server->>gRPC: gRPC Response
     gRPC->>Env: Game State
-    Env->>RLlib: (obs., rews., terms., truns., info)
+    Env->>RLlib: (obs., rews., terms., truncs., infos)
 
     Note over RLlib,Game: Training Loop
 
