@@ -17,8 +17,7 @@ from ray.tune.result import (
     TIMESTEPS_TOTAL,
 )
 
-from callbacks import add_policies, script_metrics, winrates
-from experiments import config
+from callbacks import add_policies
 from footsies import footsies_env
 from models.rl_modules import back, lstm_module, noop
 from utils import matchmaking
@@ -99,9 +98,7 @@ class Experiment:
             .env_runners(
                 env_runner_cls=multi_agent_env_runner.MultiAgentEnvRunner,
                 num_env_runners=(
-                    config.NUM_ENV_RUNNERS
-                    if not self.config.get("debug", False)
-                    else 1
+                    40 if not self.config.get("debug", False) else 1
                 ),
                 num_cpus_per_env_runner=1,
                 num_envs_per_env_runner=1,
@@ -112,7 +109,7 @@ class Experiment:
             .training(
                 model={"uses_new_env_runners": True},
                 lr=3e-4,
-                entropy_coeff=0.05,
+                entropy_coeff=0.01,
             )
             .multi_agent(
                 policies={
@@ -135,6 +132,7 @@ class Experiment:
                             model_config={
                                 "lstm_cell_size": 32,
                                 "dense_layers": [128, 128],
+                                "max_seq_len": 32,
                             },
                         ),
                         "random": rl_module.RLModuleSpec(
@@ -151,9 +149,7 @@ class Experiment:
             )
             .evaluation(
                 evaluation_num_env_runners=(
-                    config.NUM_EVAL_ENV_RUNNERS
-                    if not self.config.get("debug", False)
-                    else 1
+                    5 if not self.config.get("debug", False) else 1
                 ),
                 evaluation_interval=1,
                 evaluation_duration="auto",
@@ -179,11 +175,9 @@ class Experiment:
             .callbacks(
                 rllib_callbacks.make_multi_callbacks(
                     [
-                        winrates.Winrates,
                         functools.partial(
                             add_policies.AddPolicies, policies=eval_policies
                         ),
-                        script_metrics.ScriptMetrics,
                     ]
                 )
             )
