@@ -1,6 +1,67 @@
 # FootsiesGym
 
-Implementation of the Footsies Unity game as a reinforcement learning environment.
+Implementation of HiFight's [Footsies](https://hifight.github.io/footsies/) game as a reinforcement learning environment. This environment serves as a benchmark for multi-agent reinforcement learning in a (relatively) complex two-player zero-sum game.
+
+The environment is derived from the open-source Unity implementation, which has been augmented to run a gRPC server that can be controlled through a Python harness. Training is implemented using Ray's [RLlib](https://docs.ray.io/en/latest/rllib/index.html).
+
+
+### System Architecture
+
+```mermaid
+sequenceDiagram
+    participant RLlib as Ray RLlib
+    participant Env as FootsiesEnv
+    participant gRPC as gRPC Client
+    participant Server as Unity Game Server
+    participant Game as Footsies Game
+
+    RLlib->>Env: step(action)
+    Env->>gRPC: SendAction(action)
+    gRPC->>Server: gRPC Request
+    Server->>Game: Update Game State
+    Game->>Server: Game State
+    Server->>gRPC: gRPC Response
+    gRPC->>Env: Observation
+    Env->>RLlib: (observation, reward, done, info)
+
+    Note over RLlib,Game: Training Loop
+    Note over Server,Game: Game Logic
+    Note over Env,gRPC: Environment Interface
+```
+
+The diagram above shows how the different components interact during training:
+1. RLlib sends actions to the FootsiesEnv
+2. The environment converts these actions into gRPC requests
+3. The Unity Game Server processes the actions and updates the game state
+4. The game state is sent back through gRPC to the environment
+5. The environment processes the observation and returns it to RLlib
+
+
+
+## Project Architecture
+
+### Core Components
+
+- **Environment (`footsies/`)**: The main game environment implementation that interfaces with the Unity game through gRPC.
+- **Models (`models/`)**: Neural network architectures for the RL agents
+- **Experiments (`experiments/`)**: Training configurations and experiment management
+- **Callbacks (`callbacks/`)**: Custom RLlib callbacks for monitoring and evaluation
+- **Components (`components/`)**: Reusable components like the module repository for policy management
+- **Utils (`utils/`)**: Utility functions and helper classes
+- **Scripts (`scripts/`)**: Helper scripts for server management and visualization
+
+### Key Features
+
+- Multi-agent reinforcement learning environment
+- gRPC-based communication with Unity game server
+- Support for both headless and windowed game modes
+- Integration with Ray RLlib for distributed training
+- Custom LSTM-based policy networks
+- Support for self-play training
+- Evaluation against baseline policies (random, noop, back)
+- Wandb integration for experiment tracking
+
+
 
 ## Installation
 
@@ -8,7 +69,6 @@ Implementation of the Footsies Unity game as a reinforcement learning environmen
 conda create -n footsiesgym python=3.10
 conda activate footsiesgym
 pip install -r requirements.txt
-pre-commit install
 ```
 
 On a Mac, you may need to ensure you have `cmake` installed. You can install it using Homebrew:
@@ -17,70 +77,111 @@ On a Mac, you may need to ensure you have `cmake` installed. You can install it 
 brew install cmake
 ```
 
-
-
-
 ## Training
 
 ### Game Servers
 
-Before training, you'll need to launch the headless game servers. A script is provided to do so in `scripts/start_local_servers.sh`, but you must first unpack the binaries that are included in `binaries/footsies_linux_server_021725.zip`. The `start_local_servers.sh` script assumes that you have unpacked the contents into `~/footsies_binaries`.
+Before training, you'll need to launch the headless game servers. A script is provided to do so in `scripts/start_local_{mac, linux}_servers.sh`, but you must first unpack the binaries that are included . The `start_local_servers.sh` script assumes that you have unpacked the contents into `~/footsies_binaries`.
 
 ```bash
 ./scripts/start_local_servers.sh <num-train-servers> <num-eval-servers>
 ```
 
-The two arguments correspond to `num_env_runners` and `evaluation_num_env_runners`, which can be specified in `experiments/config.py`. You must launch a corresponding
-number of servers for each. The `start_local_servers.sh` script will start training servers from a specified port number (50051) and increment from there,
-and evaluation servers from a specified port number (40051) and increment from there. The environment will use workers indices to determine which game server to connect to.
+The two arguments correspond to `num_env_runners` and `evaluation_num_env_runners`, which can be specified in the experiment configuration. You must launch a corresponding number of servers for each. The `start_local_servers.sh` script will start:
+- Training servers from port 50051 (incrementing for each server)
+- Evaluation servers from port 40051 (incrementing for each server)
 
-_Note_: All of my training runs so far have been with an RTX 3090 and 24-core Threadripper, where I've been able to run 40 training environments and 5 evaluation environments. With this setup, I see 40-65% utilization per-core.
+The environment will use worker indices to determine which game server to connect to.
 
+_Note_: All training runs have been tested with an RTX 3090 and 24-core Threadripper, supporting 40 training environments and 5 evaluation environments with 40-65% utilization per-core.
 
-### Experiments
+### Training Configuration
 
-The current setup is an LSTM Torch network trained through self-play with APPO (old stack). To launch a new experiment, run:
+The default training setup uses:
+- LSTM-based neural network architecture
+- APPO (Asynchronous Proximal Policy Optimization) algorithm
+- Self-play training paradigm
+- Distributed training with Ray RLlib
+
+To launch a new experiment:
 
 ```bash
 python -m experiments.train --experiment-name <experiment-name>
 ```
 
-You can optionally add the `--debug` flag to use only a single env runner and to use `local_mode`. If you do so, using the experiment name `test` will avoid restoring or saving too man new experiments in `ray_results`.
+Add the `--debug` flag to use only a single env runner and local mode. Using the experiment name `test` in debug mode will avoid creating too many experiments in `ray_results`.
 
+### Hyperparameter Tuning
 
-The full experiment is configured in `experiments/experiment.py`
-
-
-There is a first pass at new stack migration in `experiments/experiment_rlmodule.py` (and a corresponding network in `models/rl_modules/lstm_module.py`.). I believe that they are outdated and need to be updated.
-
+The project supports hyperparameter tuning through Ray Tune with HyperOpt. Key hyperparameters that can be tuned include:
+- Learning rate
+- Entropy coefficient
+- Value function loss coefficient
+- Tau (for target network updates)
 
 ## Visualizing a Policy
 
-To visualize gameplay, you'll need to run the windowed version of the game. This repository includes the windowed and headless Linux builds (TODO: add Windows/Mac windowed builds).
+To visualize gameplay:
+
 1. Unpack the windowed build binaries (`binaries/footsies_linux_windowed_021725.zip`) to your preferred location.
-2. Add the trained policy specification (unless you want to use `random` or `noop`) to the to the `ModuleRepository` in `components/module_repository.py`. This assumes you've trained a policy and it's stored in `~/ray_results/<experiment-name>/checkpoint_<checkpoint-number>/checkpoint-<checkpoint-number>`.
+
+2. Add the trained policy specification to the `ModuleRepository` in `components/module_repository.py`:
 ```python
-        FootsiesModuleSpec(
-            module_name="<policy-nickname>,
-            experiment_name="<experiment-name>",
-            trial_id="<trial-id>",  # it the experiment has multiple trials, specify the trial id
-            checkpoint_number=-1,  # -1 for latest, otherwise specify a checkpoint number
-        ),
+FootsiesModuleSpec(
+    module_name="<policy-nickname>",
+    experiment_name="<experiment-name>",
+    trial_id="<trial-id>",  # specify if experiment has multiple trials
+    checkpoint_number=-1,  # -1 for latest, otherwise specify checkpoint number
+)
 ```
-3. Run the game with `./footsies_linux_windowed_021725 --port 80051` (or any alternative port you've specified in `scripts/local_inference.py`).
-4. Specify policies in `scripts/local_inference.py` using the `MODULES` variable. If you'd like to play, set `"p1"` to be `"human"`. Run `python -m scripts.local_inference`.
 
----
-###  gRPC / Protobuf Updates
-
-If you are updating the proto, you'll need to generate `Footsies.cs` and `FootsiesGrpc.cs`. This repo includes what you need on a __Windows__ machine:
-
+3. Run the game with:
+```bash
+./footsies_linux_windowed_021725 --port 80051
 ```
+
+4. Configure policies in `scripts/local_inference.py` using the `MODULES` variable. Set `"p1"` to `"human"` to play against the AI.
+
+## Development
+
+### gRPC / Protobuf Updates
+
+If updating the proto definitions:
+
+1. Generate C# files (Windows):
+```bash
 .\protoc\bin\protoc.exe --csharp_out=.\env\game\proto\ --grpc_out=.\env\game\proto\ --plugin=protoc-gen-grpc=.\plugins\grpc_csharp_plugin.exe .\env\game\proto\footsies_service.proto
 ```
 
-The corresponding python files are also necessary (make sure to `pip install grpcio-tools grpcio`):
-
-```
+2. Generate Python files:
+```bash
 python -m grpc_tools.protoc -I. --python_out=. --grpc_python_out=. .\env\game\proto\footsies_service.proto
 ```
+
+## Project Structure
+
+```
+FootsiesGym/
+├── binaries/           # Game server binaries
+├── callbacks/          # RLlib callbacks
+├── components/         # Reusable components
+├── experiments/        # Training configurations
+├── footsies/          # Core environment
+├── models/            # Neural network architectures
+├── plugins/           # gRPC plugins
+├── protoc/            # Protocol buffer tools
+├── scripts/           # Helper scripts
+├── testing/           # Test files
+└── utils/             # Utility functions
+```
+
+## Contributing
+
+1. Install pre-commit hooks to maintain code quality
+2. Follow the existing code style and architecture
+3. Add tests for new features
+4. Update documentation as needed
+
+## License
+
+This project is based on the open-source Footsies game by HiFight. Please refer to the original game's license for more information.
