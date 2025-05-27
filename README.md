@@ -15,6 +15,10 @@ sequenceDiagram
     participant Server as Unity Game Server
     participant Game as Footsies Game
 
+    Note over RLlib,Env: Python Environment
+    Note over gRPC: Communication Layer
+    Note over Server,Game: Unity Game
+
     RLlib->>Env: step(action)
     Env->>gRPC: SendAction(action)
     gRPC->>Server: gRPC Request
@@ -27,6 +31,16 @@ sequenceDiagram
     Note over RLlib,Game: Training Loop
     Note over Server,Game: Game Logic
     Note over Env,gRPC: Environment Interface
+
+    rect rgb(200, 220, 255)
+        Note over RLlib,Env: Python Environment Components
+    end
+    rect rgb(255, 220, 200)
+        Note over Server,Game: Unity Game Components
+    end
+    rect rgb(220, 255, 220)
+        Note over gRPC: gRPC Communication Layer
+    end
 ```
 
 The diagram above shows how the different components interact during training:
@@ -36,30 +50,6 @@ The diagram above shows how the different components interact during training:
 4. The game state is sent back through gRPC to the environment
 5. The environment processes the observation and returns it to RLlib
 
-
-
-## Project Architecture
-
-### Core Components
-
-- **Environment (`footsies/`)**: The main game environment implementation that interfaces with the Unity game through gRPC.
-- **Models (`models/`)**: Neural network architectures for the RL agents
-- **Experiments (`experiments/`)**: Training configurations and experiment management
-- **Callbacks (`callbacks/`)**: Custom RLlib callbacks for monitoring and evaluation
-- **Components (`components/`)**: Reusable components like the module repository for policy management
-- **Utils (`utils/`)**: Utility functions and helper classes
-- **Scripts (`scripts/`)**: Helper scripts for server management and visualization
-
-### Key Features
-
-- Multi-agent reinforcement learning environment
-- gRPC-based communication with Unity game server
-- Support for both headless and windowed game modes
-- Integration with Ray RLlib for distributed training
-- Custom LSTM-based policy networks
-- Support for self-play training
-- Evaluation against baseline policies (random, noop, back)
-- Wandb integration for experiment tracking
 
 
 
@@ -111,13 +101,7 @@ python -m experiments.train --experiment-name <experiment-name>
 
 Add the `--debug` flag to use only a single env runner and local mode. Using the experiment name `test` in debug mode will avoid creating too many experiments in `ray_results`.
 
-### Hyperparameter Tuning
 
-The project supports hyperparameter tuning through Ray Tune with HyperOpt. Key hyperparameters that can be tuned include:
-- Learning rate
-- Entropy coefficient
-- Value function loss coefficient
-- Tau (for target network updates)
 
 ## Visualizing a Policy
 
@@ -141,6 +125,32 @@ FootsiesModuleSpec(
 ```
 
 4. Configure policies in `scripts/local_inference.py` using the `MODULES` variable. Set `"p1"` to `"human"` to play against the AI.
+
+
+
+## Project Architecture
+
+### Core Components
+
+- **Environment (`footsies/`)**: The main game environment implementation that interfaces with the Unity game through gRPC.
+- **Models (`models/`)**: Neural network architectures for the RL agents
+- **Experiments (`experiments/`)**: Training configurations and experiment management
+- **Callbacks (`callbacks/`)**: Custom RLlib callbacks for monitoring and evaluation
+- **Components (`components/`)**: Reusable components like the module repository for policy management
+- **Utils (`utils/`)**: Utility functions and helper classes
+- **Scripts (`scripts/`)**: Helper scripts for server management and visualization
+
+### Key Features
+
+- Multi-agent reinforcement learning environment
+- gRPC-based communication with Unity game server
+- Support for both headless and windowed game modes
+- Integration with Ray RLlib for distributed training
+- Custom LSTM-based policy networks
+- Support for self-play training
+- Evaluation against baseline policies (random, noop, back)
+- Wandb integration for experiment tracking
+
 
 ## Development
 
