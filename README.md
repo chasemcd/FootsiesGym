@@ -40,8 +40,6 @@ The diagram above shows how the different components interact during training:
 5. The environment processes the observation and returns it to RLlib
 
 
-
-
 ## Installation
 
 ```bash
@@ -60,35 +58,37 @@ brew install cmake
 
 ### Game Servers
 
-Before training, you'll need to launch the headless game servers. A script is provided to do so in `scripts/start_local_{mac, linux}_servers.sh`, but you must first unpack the binaries that are included . The `start_local_servers.sh` script assumes that you have unpacked the contents into `~/footsies_binaries`.
+Before training, you'll need to launch the headless game servers. Scripts are provided to do so in `scripts/start_local_{mac, linux}_servers.sh`, but you must first unpack the binaries that are included into the `binaries/` directory (the launch scripts assume this location).
 
 ```bash
-./scripts/start_local_servers.sh <num-train-servers> <num-eval-servers>
+./scripts/start_local_{mac, linux}_servers.sh <num-train-servers> <num-eval-servers>
 ```
 
-The two arguments correspond to `num_env_runners` and `evaluation_num_env_runners`, which can be specified in the experiment configuration. You must launch a corresponding number of servers for each. The `start_local_servers.sh` script will start:
+The two arguments correspond to `num_env_runners` and `evaluation_num_env_runners`, which can be specified in the experiment configuration. You must launch a corresponding number of servers for each. If you are running local debugging (see below; `python -m experiments.train --debug`), just launch one of each. If you're launching a full experiment, you'll need to match the number specified in the experiment configuration (defaults to 40 training and 5 evaluation env runners).
+
+The scripts will start:
 - Training servers from port 50051 (incrementing for each server)
 - Evaluation servers from port 40051 (incrementing for each server)
 
-The environment will use worker indices to determine which game server to connect to.
-
-_Note_: All training runs have been tested with an RTX 3090 and 24-core Threadripper, supporting 40 training environments and 5 evaluation environments with 40-65% utilization per-core.
+Importantly, we map environment runners to a single port, which means that you can only run a single environment per environment runner.
 
 ### Training Configuration
 
-The default training setup uses:
-- LSTM-based neural network architecture
-- APPO (Asynchronous Proximal Policy Optimization) algorithm
-- Self-play training paradigm
-- Distributed training with Ray RLlib
+The default training utilizes the [APPO](https://docs.ray.io/en/latest/rllib/rllib-algorithms.html#appo) algorithm (see the corresponding [IMPACT](https://arxiv.org/abs/1912.00167) paper). We also utilize a vanilla LSTM newtwork with parameters described in the respective experiment files.
 
-To launch a new experiment:
+Training can utilize either the new RLModule stack or old-stack in RLlib. Some functionality has yet to be implemented in the new stack (see open issues).
 
+#### Old Stack
 ```bash
 python -m experiments.train --experiment-name <experiment-name>
 ```
 
-Add the `--debug` flag to use only a single env runner and local mode. Using the experiment name `test` in debug mode will avoid creating too many experiments in `ray_results`.
+#### New Stack
+```bash
+python -m experiments.train --experiment-name <experiment-name>
+```
+
+Add the `--debug` flag to use only a single env runner (and single evaluation env runner) and local mode. This will enable breakpoint usage for local debugging.
 
 
 
@@ -96,7 +96,7 @@ Add the `--debug` flag to use only a single env runner and local mode. Using the
 
 To visualize gameplay:
 
-1. Unpack the windowed build binaries (`binaries/footsies_linux_windowed_021725.zip`) to your preferred location.
+1. Unpack the windowed build binaries of your choice (Mac or Linux).
 
 2. Add the trained policy specification to the `ModuleRepository` in `components/module_repository.py`:
 ```python
@@ -113,9 +113,7 @@ FootsiesModuleSpec(
 ./footsies_linux_windowed_021725 --port 80051
 ```
 
-4. Configure policies in `scripts/local_inference.py` using the `MODULES` variable. Set `"p1"` to `"human"` to play against the AI.
-
-
+4. Configure policies in `scripts/local_inference.py` using the `MODULES` variable. Set `"p1"` to `"human"` to play against the AI (must install `pygame`).
 
 ## Project Architecture
 
