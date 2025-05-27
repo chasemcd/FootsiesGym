@@ -18,7 +18,7 @@ for (( i=0; i<NUM_SERVERS_50051; i++ ))
 do
   PORT=$((START_PORT_50051 + i))
   echo "Starting server on port $PORT"
-  arch -x86_64 ~/footsies_mac_headless_5709b6d/FOOTSIES --port $PORT &
+  arch -x86_64 binaries/footsies_mac_headless_5709b6d/FOOTSIES --port $PORT &
 done
 
 # Loop to start the specified number of servers starting from 40051
@@ -26,7 +26,7 @@ for (( i=0; i<NUM_SERVERS_40051; i++ ))
 do
   PORT=$((START_PORT_40051 + i))
   echo "Starting server on port $PORT"
-  arch -x86_64 ~/footsies_mac_headless_5709b6d/FOOTSIES --port $PORT &
+  arch -x86_64 binaries/footsies_mac_headless_5709b6d/FOOTSIES --port $PORT &
 done
 
 echo "All servers started."
