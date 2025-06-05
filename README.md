@@ -85,7 +85,7 @@ python -m experiments.train --experiment-name <experiment-name>
 
 #### New Stack
 ```bash
-python -m experiments.train --experiment-name <experiment-name>
+python -m experiments.train_rlmodule --experiment-name <experiment-name>
 ```
 
 Add the `--debug` flag to use only a single env runner (and single evaluation env runner) and local mode. This will enable breakpoint usage for local debugging.
