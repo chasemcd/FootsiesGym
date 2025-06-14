@@ -1,4 +1,20 @@
 # Linux
+To run headless linux servers, unpack the corresponding .zip file into the `binaries/` directory and rename the unpacked directory to `footsies_binaries`. Make sure to then run `chmod +x footsies_binaries/footsies.x86_64`.
+Next, you can either launch a single game server with:
+
+```
+./footsies_binaries/footsies.x86_64 --port <YOUR_DESIRED_PORT>
+```
+
+Or, for a full experiment, you can launch a fleet of servers for training and evaluation with::
+
+```
+./scripts/start_local_linux_servers.sh <NUM_TRAINING_SERVERS> <NUM_EVAL_SERVERS>
+```
+
+The default experiment is set to run 40 training servers and 5 evaluation servers. Adjust as needed (both the launch commmand as well as the settings in the `Experiment` itself).
+
+When done, you can run `./scripts/kill_local_linux_servers.sh` to clean up all running processes.
 
 
 # Mac
